@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h1>Flashcards</h1>
+    <p class="subtitle">Generate flashcards to test your knowledge</p>
+    
+    <div class="topic-input-section">
+        <form id="flashcard-form">
+            <input type="text" id="topic" placeholder="Enter a topic..." required>
+            <button type="submit">Generate Flashcards</button>
+        </form>
+    </div>
+    
+    <div id="loading" class="loading" style="display:none;">
+        <p>Generating your flashcards...</p>
+    </div>
+    
+    <div id="flashcards-container" style="display:none;">
+        <div class="flashcard-container">
+            <div class="flashcard">
+                <div class="flashcard-inner">
+                    <div class="flashcard-front">
+                        <p id="question-text">Click to flip</p>
+                    </div>
+                    <div class="flashcard-back">
+                        <p id="answer-text">Answer will appear here</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flashcard-controls">
+                <button id="prev-btn" disabled>← Previous</button>
+                <span id="card-counter">Card 1 of 0</span>
+                <button id="next-btn" disabled>Next →</button>
+            </div>
+        </div>
+        <p class="hint">Click on the card to flip it!</p>
+    </div>
+    
+    <div class="student-id">
+        Flashcards Feature
+    </div>
+</div>
+{% endblock %}
