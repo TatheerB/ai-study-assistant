@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, jsonify
+from flask import Blueprint, render_template, jsonify, request, current_app
 
 main_bp = Blueprint('main', __name__)
 
@@ -17,3 +17,20 @@ def quiz():
 @main_bp.route('/health')
 def health():
     return jsonify({'status': 'healthy'}), 200
+
+@main_bp.route('/generate-summary', methods=['POST'])
+def generate_summary():
+    data = request.get_json()
+
+    if not data or 'topic' not in data:
+        return jsonify({"error": "Topic is required"}), 400
+
+    topic = data['topic']
+
+    return jsonify({
+        "message": "Summary endpoint created successfully",
+        "topic": topic,
+        "summary": "This is a placeholder summary. Gemini integration will be added in Week 12."
+    }), 200
+
+
