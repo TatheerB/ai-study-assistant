@@ -255,3 +255,32 @@ Frontend & DevOps - Configure CD pipeline\
 -   Live application deployed\
 -   All AI features working in production\
 -   Presentation and demo ready
+
+------------------------------------------------------------------------
+
+## 🗄️ Database Schema (Study Set)
+
+The application stores study sets in MongoDB. Each study set follows this structure:
+
+```json
+{
+  "topic": "string",
+  "summary": "string",
+  "flashcards": [
+    {
+      "question": "string",
+      "answer": "string"
+    }
+  ],
+  "quiz": [
+    {
+      "question": "string",
+      "options": ["A", "B", "C", "D"],
+      "correct_answer": "string"
+    }
+  ],
+  "created_at": "timestamp"
+}
+
+
+
