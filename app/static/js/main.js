@@ -48,34 +48,35 @@ async function generateFlashcards(topic) {
     const loading = document.getElementById('loading');
     const container = document.getElementById('flashcards-container');
     
-    // Show loading
     if (loading) loading.style.display = 'block';
     if (container) container.style.display = 'none';
     
     try {
-        console.log(`Generating flashcards for: ${topic}`);
+        console.log(`Calling API for flashcards about: ${topic}`);
         
-        // Mock flashcards for testing UI
-        // Week 12: This will connect to /generate-flashcards API
-        currentFlashcards = [
-            { question: `What is ${topic}?`, answer: `${topic} is a fascinating subject that helps us understand the world better.` },
-            { question: `Why is ${topic} important?`, answer: `Understanding ${topic} helps in many real-world applications and critical thinking.` },
-            { question: `What are the key concepts of ${topic}?`, answer: `Key concepts include fundamentals, principles, and practical applications.` },
-            { question: `How can you learn more about ${topic}?`, answer: `You can explore books, online courses, and hands-on practice.` },
-            { question: `What are common challenges in ${topic}?`, answer: `Common challenges include complexity, practice requirements, and staying updated.` }
-        ];
+        const response = await fetch('/generate-flashcards', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ topic: topic })
+        });
         
+        const data = await response.json();
+        
+        if (data.error) {
+            throw new Error(data.error);
+        }
+        
+        currentFlashcards = data.flashcards;
         currentCardIndex = 0;
         displayCurrentCard();
         
-        // Show container
         if (container) container.style.display = 'block';
-        
-        // Enable controls
         updateCardControls();
         
     } catch (error) {
-        console.error('Error generating flashcards:', error);
+        console.error('Error:', error);
         alert('Failed to generate flashcards. Please try again.');
     } finally {
         if (loading) loading.style.display = 'none';

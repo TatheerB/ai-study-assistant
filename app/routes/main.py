@@ -1,4 +1,8 @@
 from flask import Blueprint, render_template, jsonify, request, current_app
+from app.services.gemini_service import generate_flashcards_from_gemini
+
+import os
+print(f"API Key loaded: {os.getenv('GEMINI_API_KEY') is not None}")
 
 main_bp = Blueprint('main', __name__)
 
@@ -63,4 +67,20 @@ def delete_study_set():
         "message": "Delete endpoint created successfully",
         "deleted_topic": data['topic']
     }), 200
+
+@main_bp.route('/generate-flashcards', methods=['POST'])
+def generate_flashcards():
+    data = request.get_json()
+    topic = data.get('topic')
+    
+    if not topic:
+        return jsonify({'error': 'Topic is required'}), 400
+    
+    try:
+        flashcards = generate_flashcards_from_gemini(topic)
+        return jsonify({'flashcards': flashcards})
+    except Exception as e:
+        import traceback
+        traceback.print_exc()   # 🔹 This prints full error in terminal
+        return jsonify({'error': str(e)}), 500
 
