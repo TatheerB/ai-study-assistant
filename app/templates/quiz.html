@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h1>Practice Quiz</h1>
+    <p class="subtitle">Test your knowledge with AI-generated quizzes</p>
+    
+    <div class="topic-input-section">
+        <form id="quiz-form">
+            <input type="text" id="topic" placeholder="Enter a topic..." required>
+            <button type="submit" id="generate-btn">Generate Quiz</button>
+        </form>
+    </div>
+    
+    <div id="loading" style="display:none; text-align: center; padding: 2rem;">
+        <p>Generating your quiz...</p>
+    </div>
+    
+    <div id="quiz-container" style="display:none;">
+        <div id="questions-container"></div>
+        <button id="submit-quiz" class="submit-btn">Submit Quiz</button>
+        <div id="quiz-results" style="display:none;"></div>
+    </div>
+    
+    <div class="student-id">
+        Tatheer Batool (ID: 60303339) | Quiz Feature | INFS3203 Winter 2026
+    </div>
+</div>
+{% endblock %}
