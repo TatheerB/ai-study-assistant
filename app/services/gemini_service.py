@@ -71,9 +71,7 @@ Only return the JSON array, no other text.
         # Parse the JSON
         flashcards_data = json.loads(text)
         
-        # Ensure we have exactly 15 flashcards
         if len(flashcards_data) < 15:
-            # Add more if needed
             for i in range(len(flashcards_data), 15):
                 flashcards_data.append({
                     "question": f"Advanced concept {i+1} about {topic}?",
@@ -84,7 +82,6 @@ Only return the JSON array, no other text.
         
     except Exception as e:
         print(f"Error parsing flashcards: {e}")
-        # Detailed fallback flashcards
         fallback = [
             {"question": f"What is {topic} and what are its key characteristics?", "answer": f"{topic} is a fascinating subject with many applications. Key characteristics include its core principles, practical applications, and theoretical foundations."},
             {"question": f"What are the main applications of {topic}?", "answer": f"{topic} has applications in various fields including education, research, and industry."},
@@ -101,28 +98,26 @@ Only return the JSON array, no other text.
         return fallback[:15]
 
 def generate_quiz(topic):
-    """Generate a 5-question multiple-choice quiz"""
+    """Generate a 20-question multiple-choice quiz using Gemini"""
     
     api_key = os.getenv('GEMINI_API_KEY')
     url = f"https://aiplatform.googleapis.com/v1/publishers/google/models/gemini-2.5-flash-lite:generateContent?key={api_key}"
     
     prompt = f"""
-You are an expert university professor teaching {topic}.
+    Create a 20-question multiple-choice quiz about "{topic}".
+    Each question should test understanding of key concepts.
 
-Create a 5-question multiple-choice quiz about {topic}.
-Each question should test understanding of key concepts.
+    For each question, provide:
+    - question: The question text
+    - options: Array of 4 options (A, B, C, D)
+    - correct: The index of the correct answer (0, 1, 2, or 3)
 
-For each question, provide:
-- question: The question text (detailed and thought-provoking)
-- options: Array of 4 options (A, B, C, D)
-- correct: The index of the correct answer (0, 1, 2, or 3)
-
-Format your response as a JSON array. Example:
-[
+    Format your response as a JSON array. Example:
+    [
     {{
-        "question": "What is Python and what makes it different from compiled languages?",
-        "options": ["It runs faster", "It's interpreted line by line", "It has no syntax", "It's only for web"],
-        "correct": 1
+        "question": "What is Python?",
+        "options": ["A programming language", "A snake", "A car", "A food"],
+        "correct": 0
     }}
 ]
 
@@ -143,7 +138,7 @@ Only return the JSON array, no other text.
     
     try:
         text = result['candidates'][0]['content']['parts'][0]['text']
-        
+
         # Clean up the text
         text = text.strip()
         if text.startswith('```json'):
@@ -153,26 +148,24 @@ Only return the JSON array, no other text.
         if text.endswith('```'):
             text = text[:-3]
         text = text.strip()
-        
         quiz_data = json.loads(text)
-        return quiz_data
         
+        if len(quiz_data) < 20:
+            while len(quiz_data) < 20:
+                quiz_data.append({
+                    "question": f"Additional question about {topic}?",
+                    "options": ["Option 1", "Option 2", "Option 3", "Option 4"],
+                    "correct": 0
+                })
+        return quiz_data[:20]
+    
     except Exception as e:
         print(f"Error parsing quiz: {e}")
-        return [
-            {
-                "question": f"What is the primary characteristic of {topic}?",
+        fallback = []
+        for i in range(20):
+            fallback.append({
+                "question": f"Question {i+1}: What is {topic}?",
                 "options": ["Definition 1", "Definition 2", "Definition 3", "Definition 4"],
                 "correct": 0
-            },
-            {
-                "question": f"Why is {topic} important?",
-                "options": ["Reason A", "Reason B", "Reason C", "Reason D"],
-                "correct": 1
-            },
-            {
-                "question": f"Where is {topic} commonly applied?",
-                "options": ["Place 1", "Place 2", "Place 3", "Place 4"],
-                "correct": 2
-            }
-        ]
+            })
+        return fallback

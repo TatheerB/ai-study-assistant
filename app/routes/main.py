@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, jsonify, request, current_app
 from app.services.gemini_service import generate_flashcards_from_gemini
+from app.services.gemini_service import generate_flashcards_from_gemini, generate_quiz
 
 import os
 print(f"API Key loaded: {os.getenv('GEMINI_API_KEY') is not None}")
@@ -81,6 +82,22 @@ def generate_flashcards():
         return jsonify({'flashcards': flashcards})
     except Exception as e:
         import traceback
-        traceback.print_exc()   # 🔹 This prints full error in terminal
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+    
+@main_bp.route('/generate-quiz', methods=['POST'])
+def generate_quiz_endpoint():
+    data = request.get_json()
+    topic = data.get('topic')
+    
+    if not topic:
+        return jsonify({'error': 'Topic is required'}), 400
+    
+    try:
+        quiz_data = generate_quiz(topic)
+        return jsonify({'quiz': quiz_data})
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
