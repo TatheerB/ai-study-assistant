@@ -1,6 +1,3 @@
-// AI Study Assistant - Flashcard UI Component
-// Issue #2: Build flashcard UI component
-
 let currentFlashcards = [];
 let currentCardIndex = 0;
 
@@ -147,37 +144,35 @@ function initQuizPage() {
     }
 }
 
-function generateQuiz(topic) {
+async function generateQuiz(topic) {
     const loading = document.getElementById('loading');
     const container = document.getElementById('quiz-container');
     
     if (loading) loading.style.display = 'block';
     if (container) container.style.display = 'none';
     
-    // Mock quiz data (will connect to real API in Week 12)
-    setTimeout(function() {
-        quizQuestions = [
-            {
-                question: `What is ${topic}?`,
-                options: ['Option 1', 'Option 2', 'Option 3', 'Option 4'],
-                correct: 0
-            },
-            {
-                question: `Why is ${topic} important?`,
-                options: ['Reason A', 'Reason B', 'Reason C', 'Reason D'],
-                correct: 1
-            },
-            {
-                question: `Where is ${topic} used?`,
-                options: ['Place 1', 'Place 2', 'Place 3', 'Place 4'],
-                correct: 2
-            }
-        ];
+    try {
+        console.log(`Calling API for quiz about: ${topic}`);
         
+        const response = await fetch('/generate-quiz', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ topic: topic })
+        });
+        
+        const data = await response.json();
+        
+        if (data.error) {
+            throw new Error(data.error);
+        }
+        
+        // Store quiz data from API
+        quizQuestions = data.quiz;
         userChoices = new Array(quizQuestions.length).fill(null);
         displayQuiz();
         
-        if (loading) loading.style.display = 'none';
         if (container) container.style.display = 'block';
         
         const resultsDiv = document.getElementById('quiz-results');
@@ -185,7 +180,13 @@ function generateQuiz(topic) {
         
         const submitBtn = document.getElementById('submit-quiz');
         if (submitBtn) submitBtn.disabled = false;
-    }, 500);
+        
+    } catch (error) {
+        console.error('Error generating quiz:', error);
+        alert('Failed to generate quiz. Please try again.');
+    } finally {
+        if (loading) loading.style.display = 'none';
+    }
 }
 
 function displayQuiz() {
