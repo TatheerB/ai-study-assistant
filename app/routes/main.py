@@ -82,10 +82,23 @@ def save_study_set():
 
 @main_bp.route('/get-history', methods=['GET'])
 def get_history():
-    return jsonify({
-        "message": "History endpoint created successfully",
-        "history": []
-    }), 200
+    try:
+        study_sets = list(current_app.db.study_sets.find().sort('created_at', -1))
+
+        history = []
+        for item in study_sets:
+            history.append({
+                'id': str(item['_id']),
+                'topic': item.get('topic', ''),
+                'summary': item.get('summary', ''),
+                'created_at': item.get('created_at')
+            })
+
+        return jsonify({'history': history}), 200
+
+    except Exception as e:
+        print("DB ERROR:", str(e))
+        return jsonify({'error': 'Failed to retrieve study history'}), 500
 
 @main_bp.route('/delete-study-set', methods=['DELETE'])
 def delete_study_set():
