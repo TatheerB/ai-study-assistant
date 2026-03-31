@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, jsonify, request, current_app
 from app.services.gemini_service import generate_flashcards_from_gemini, generate_quiz
 from datetime import datetime
 from app.services.gemini_service import generate_summary
+from bson import ObjectId
 
 import os
 print(f"API Key loaded: {os.getenv('GEMINI_API_KEY') is not None}")
@@ -82,22 +83,44 @@ def save_study_set():
 
 @main_bp.route('/get-history', methods=['GET'])
 def get_history():
-    return jsonify({
-        "message": "History endpoint created successfully",
-        "history": []
-    }), 200
+    try:
+        study_sets = list(current_app.db.study_sets.find().sort('created_at', -1))
+
+        history = []
+        for item in study_sets:
+            history.append({
+                'id': str(item['_id']),
+                'topic': item.get('topic', ''),
+                'summary': item.get('summary', ''),
+                'created_at': item.get('created_at')
+            })
+
+        return jsonify({'history': history}), 200
+
+    except Exception as e:
+        print("DB ERROR:", str(e))
+        return jsonify({'error': 'Failed to retrieve study history'}), 500
 
 @main_bp.route('/delete-study-set', methods=['DELETE'])
 def delete_study_set():
     data = request.get_json()
 
-    if not data or 'topic' not in data:
-        return jsonify({"error": "Topic is required to delete a study set"}), 400
+    if not data or 'id' not in data:
+        return jsonify({'error': 'Study set id is required'}), 400
 
-    return jsonify({
-        "message": "Delete endpoint created successfully",
-        "deleted_topic": data['topic']
-    }), 200
+    study_set_id = data['id']
+
+    try:
+        result = current_app.db.study_sets.delete_one({'_id': ObjectId(study_set_id)})
+
+        if result.deleted_count == 0:
+            return jsonify({'message': 'No study set found with that id'}), 404
+
+        return jsonify({'message': 'Study set deleted successfully'}), 200
+
+    except Exception as e:
+        print("DB ERROR:", str(e))
+        return jsonify({'error': 'Failed to delete study set'}), 500
 
 @main_bp.route('/generate-flashcards', methods=['POST'])
 def generate_flashcards():
