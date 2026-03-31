@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, jsonify, request, current_app
-from app.services.gemini_service import generate_flashcards_from_gemini
 from app.services.gemini_service import generate_flashcards_from_gemini, generate_quiz
 from datetime import datetime
+from app.services.gemini_service import generate_summary
 
 import os
 print(f"API Key loaded: {os.getenv('GEMINI_API_KEY') is not None}")
@@ -25,18 +25,25 @@ def health():
     return jsonify({'status': 'healthy'}), 200
 
 @main_bp.route('/generate-summary', methods=['POST'])
-def generate_summary():
+def summary():
     data = request.get_json()
 
     if not data or 'topic' not in data:
-        return jsonify({"error": "Topic is required"}), 400
+        return jsonify({'error': 'Topic is required'}), 400
 
-    topic = data['topic']
+    topic = data['topic'].strip()
+
+    if not topic:
+        return jsonify({'error': 'Topic cannot be empty'}), 400
+
+    summary_text = generate_summary(topic)
+
+    if not summary_text:
+        return jsonify({'error': 'Failed to generate summary'}), 500
 
     return jsonify({
-        "message": "Summary endpoint created successfully",
-        "topic": topic,
-        "summary": "This is a placeholder summary. Gemini integration will be added in Week 12."
+        'topic': topic,
+        'summary': summary_text
     }), 200
 
 @main_bp.route('/save-study-set', methods=['POST'])

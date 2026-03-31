@@ -1,6 +1,11 @@
 import os
 import json
 import requests
+import google.generativeai as genai
+from dotenv import load_dotenv
+
+load_dotenv()
+genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
 def generate_flashcards_from_gemini(topic):
     """Generate 15 detailed, university-level flashcards about the topic"""
@@ -169,3 +174,29 @@ Only return the JSON array, no other text.
                 "correct": 0
             })
         return fallback
+    
+
+def generate_summary(topic):
+    """Generate a concise study summary for the given topic"""
+    
+    prompt = f"""
+    Create a concise, easy-to-understand study summary about "{topic}".
+
+    Requirements:
+    - Use clear bullet points
+    - Focus on key concepts
+    - Keep it suitable for a university student
+    - Include short explanations
+    """
+
+    try:
+        model = genai.GenerativeModel('gemini-2.0-flash-exp')
+        response = model.generate_content(prompt)
+
+        print("Gemini response:", response.text) 
+
+        return response.text.strip()
+
+    except Exception as e:
+        print("Gemini ERROR:", str(e))  
+        return None
