@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, jsonify, request, current_app
-from app.services.gemini_service import generate_flashcards_from_gemini
 from app.services.gemini_service import generate_flashcards_from_gemini, generate_quiz
+from datetime import datetime
 from app.services.gemini_service import generate_summary
 
 import os
@@ -50,13 +50,35 @@ def summary():
 def save_study_set():
     data = request.get_json()
 
-    if not data:
-        return jsonify({"error": "Study set data is required"}), 400
+    # Validate input
+    if not data or 'topic' not in data or 'summary' not in data:
+        return jsonify({'error': 'Topic and summary are required'}), 400
 
-    return jsonify({
-        "message": "Save study set endpoint created successfully",
-        "data": data
-    }), 200
+    topic = data['topic'].strip()
+    summary = data['summary'].strip()
+
+    if not topic or not summary:
+        return jsonify({'error': 'Topic and summary cannot be empty'}), 400
+
+    try:
+        # Create document
+        study_set = {
+            'topic': topic,
+            'summary': summary,
+            'created_at': datetime.utcnow()
+        }
+
+        # Insert into MongoDB
+        result = current_app.db.study_sets.insert_one(study_set)
+
+        return jsonify({
+            'message': 'Study set saved successfully',
+            'id': str(result.inserted_id)
+        }), 201
+
+    except Exception as e:
+        print("DB ERROR:", str(e))
+        return jsonify({'error': 'Failed to save study set'}), 500
 
 @main_bp.route('/get-history', methods=['GET'])
 def get_history():
