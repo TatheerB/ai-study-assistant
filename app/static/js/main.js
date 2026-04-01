@@ -115,12 +115,11 @@ function updateCardControls() {
 }
 
 // ==================== QUIZ FUNCTIONALITY ====================
-// Issue #3: Build quiz UI component
 
 let quizQuestions = [];
 let userChoices = [];
 
-// Initialize quiz page (this runs alongside flashcard init)
+// Initialize quiz page
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Quiz page loaded');
     initQuizPage();
@@ -174,11 +173,11 @@ async function generateQuiz(topic) {
         displayQuiz();
         
         if (container) container.style.display = 'block';
-        
         const resultsDiv = document.getElementById('quiz-results');
+
         if (resultsDiv) resultsDiv.style.display = 'none';
-        
         const submitBtn = document.getElementById('submit-quiz');
+        
         if (submitBtn) submitBtn.disabled = false;
         
     } catch (error) {
@@ -192,65 +191,69 @@ async function generateQuiz(topic) {
 function displayQuiz() {
     const container = document.getElementById('questions-container');
     if (!container) return;
-    
+ 
     let html = '';
-    
+ 
     for (let i = 0; i < quizQuestions.length; i++) {
         const q = quizQuestions[i];
         html += `<div class="question-card">`;
         html += `<p class="question-text"><strong>${i + 1}. ${q.question}</strong></p>`;
-        
-        for (let j = 0; j < q.options.length; j++) {
+ 
+        const options = Array.isArray(q.options) ? q.options : [];
+        for (let j = 0; j < options.length; j++) {
+            const optionText = options[j]
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/'/g, "&#39;")
+                .replace(/"/g, "&quot;");
             html += `
                 <div class="option">
-                    <input type="radio" name="q${i}" value="${j}">
-                    <label>${q.options[j]}</label>
+                    <input type="radio" name="q${i}" value="${j}" id="q${i}_opt${j}">
+                    <label for="q${i}_opt${j}">${optionText}</label>
                 </div>
             `;
         }
+        
         html += `</div>`;
     }
-    
+ 
     container.innerHTML = html;
-    
-    // Save answers when user selects
+ 
     for (let i = 0; i < quizQuestions.length; i++) {
-        const radios = document.querySelectorAll(`input[name="q${i}"]`);
+        const questionIndex = i;
+        const radios = document.querySelectorAll(`input[name="q${questionIndex}"]`);
         for (let j = 0; j < radios.length; j++) {
             radios[j].addEventListener('change', function() {
-                userChoices[i] = parseInt(this.value);
+                userChoices[questionIndex] = parseInt(this.value);
             });
         }
     }
 }
-
+ 
 function calculateScore() {
-    // Check if all questions answered
     for (let i = 0; i < userChoices.length; i++) {
         if (userChoices[i] === null) {
             alert(`Please answer question ${i + 1}`);
             return;
         }
     }
-    
-    // Calculate score
+ 
     let correct = 0;
     for (let i = 0; i < quizQuestions.length; i++) {
         if (userChoices[i] === quizQuestions[i].correct) {
             correct++;
         }
     }
-    
+ 
     const percentage = Math.round((correct / quizQuestions.length) * 100);
-    
-    // Show results
+ 
     const resultsDiv = document.getElementById('quiz-results');
     resultsDiv.innerHTML = `
         <strong>Your Score: ${correct}/${quizQuestions.length} (${percentage}%)</strong><br>
         ${percentage >= 70 ? 'Great job! Keep practicing!' : 'Keep studying! Try again!'}
     `;
     resultsDiv.style.display = 'block';
-    
-    // Disable submit button
+ 
     document.getElementById('submit-quiz').disabled = true;
 }
