@@ -25,6 +25,10 @@ def quiz():
 def health():
     return jsonify({'status': 'healthy'}), 200
 
+@main_bp.route('/history')
+def history():
+    return render_template('history.html')
+
 @main_bp.route('/generate-summary', methods=['POST'])
 def summary():
     data = request.get_json()

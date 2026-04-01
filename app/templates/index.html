@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h1>AI Study Assistant</h1>
+    <p class="subtitle">Generate AI-powered summaries and save them for later review.</p>
+
+    <div class="topic-input-section">
+        <form id="summary-form">
+            <input type="text" id="topic" placeholder="Enter a topic..." required>
+            <button type="submit">Generate Summary</button>
+        </form>
+    </div>
+
+    <div id="summary-loading" style="display:none; text-align:center; padding:1rem;">
+        <p>Generating summary...</p>
+    </div>
+
+    <div id="summary-result" style="display:none;">
+        <h2>Summary</h2>
+        <div id="summary-text" class="question-card"></div>
+        <button id="save-summary-btn" class="submit-btn" style="margin-top: 1rem;">Save Study Set</button>
+        <div id="save-message" style="margin-top: 1rem;"></div>
+    </div>
+</div>
+{% endblock %}

@@ -210,8 +210,16 @@ Only return the JSON array, no other text.
     return quiz_data[:20]
 
 def generate_summary(topic):
-    """Generate a concise study summary for the given topic"""
-    
+    """Generate a concise study summary using the instructor-supported endpoint."""
+
+    api_key = os.getenv("GEMINI_API_KEY")
+
+    if not api_key:
+        print("Gemini ERROR: API key not found")
+        return None
+
+    url = f"https://aiplatform.googleapis.com/v1/publishers/google/models/gemini-2.5-flash-lite:generateContent?key={api_key}"
+
     prompt = f"""
     Create a concise, easy-to-understand study summary about "{topic}".
 
@@ -220,16 +228,35 @@ def generate_summary(topic):
     - Focus on key concepts
     - Keep it suitable for a university student
     - Include short explanations
+    - Keep it informative but not too long
     """
 
+    payload = {
+        "contents": [
+            {
+                "role": "user",
+                "parts": [
+                    {
+                        "text": prompt
+                    }
+                ]
+            }
+        ]
+    }
+
+    headers = {
+        "Content-Type": "application/json"
+    }
+
     try:
-        model = genai.GenerativeModel('gemini-2.0-flash-exp')
-        response = model.generate_content(prompt)
+        response = requests.post(url, headers=headers, json=payload)
+        response.raise_for_status()
 
-        print("Gemini response:", response.text) 
+        data = response.json()
 
-        return response.text.strip()
+        text = data["candidates"][0]["content"]["parts"][0]["text"]
+        return text.strip()
 
     except Exception as e:
-        print("Gemini ERROR:", str(e))  
+        print("Gemini ERROR:", str(e))
         return None

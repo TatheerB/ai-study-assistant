@@ -256,3 +256,199 @@ function calculateScore() {
  
     document.getElementById('submit-quiz').disabled = true;
 }
+
+// ==================== SUMMARY FUNCTIONALITY ====================
+
+document.addEventListener('DOMContentLoaded', function() {
+    initSummaryPage();
+    initHistoryPage();
+});
+
+let currentSummaryTopic = '';
+let currentSummaryText = '';
+
+function initSummaryPage() {
+    const summaryForm = document.getElementById('summary-form');
+    if (!summaryForm) return;
+
+    summaryForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const topicInput = document.getElementById('topic');
+        const topic = topicInput.value.trim();
+
+        if (!topic) return;
+
+        const loading = document.getElementById('summary-loading');
+        const resultDiv = document.getElementById('summary-result');
+        const summaryTextDiv = document.getElementById('summary-text');
+        const saveMessage = document.getElementById('save-message');
+
+        loading.style.display = 'block';
+        resultDiv.style.display = 'none';
+        saveMessage.innerHTML = '';
+
+        try {
+            const response = await fetch('/generate-summary', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ topic: topic })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to generate summary');
+            }
+
+            currentSummaryTopic = data.topic;
+            currentSummaryText = data.summary;
+
+            summaryTextDiv.innerText = data.summary;
+            resultDiv.style.display = 'block';
+        } catch (error) {
+            summaryTextDiv.innerText = error.message;
+            resultDiv.style.display = 'block';
+        } finally {
+            loading.style.display = 'none';
+        }
+    });
+
+    const saveBtn = document.getElementById('save-summary-btn');
+    if (saveBtn) {
+        saveBtn.addEventListener('click', saveCurrentSummary);
+    }
+}
+
+async function saveCurrentSummary() {
+    const saveMessage = document.getElementById('save-message');
+
+    if (!currentSummaryTopic || !currentSummaryText) {
+        saveMessage.innerHTML = '<p style="color:red;">No summary to save.</p>';
+        return;
+    }
+
+    try {
+        const response = await fetch('/save-study-set', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                topic: currentSummaryTopic,
+                summary: currentSummaryText
+            })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || 'Failed to save study set');
+        }
+
+        saveMessage.innerHTML = '<p style="color:green;">Study set saved successfully.</p>';
+    } catch (error) {
+        saveMessage.innerHTML = `<p style="color:red;">${error.message}</p>`;
+    }
+}
+
+
+// ==================== HISTORY FUNCTIONALITY ====================
+
+async function initHistoryPage() {
+    const historyList = document.getElementById('history-list');
+    if (!historyList) return;
+
+    const loading = document.getElementById('history-loading');
+    loading.style.display = 'block';
+
+    try {
+        const response = await fetch('/get-history');
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || 'Failed to load history');
+        }
+
+        if (!data.history || data.history.length === 0) {
+            historyList.innerHTML = '<p>No study sets saved yet.</p>';
+            return;
+        }
+
+        let html = '';
+        data.history.forEach(item => {
+            html += `
+                <div class="question-card history-card">
+                    <h3>${item.topic}</h3>
+                    <p class="summary-preview" id="summary-${item.id}">
+                        ${item.summary.length > 180 ? item.summary.substring(0, 180) + '...' : item.summary}
+                    </p>
+                    <button class="toggle-summary-btn" 
+                            data-id="${item.id}" 
+                            data-full="${encodeURIComponent(item.summary)}"
+                            data-short="${encodeURIComponent(item.summary.length > 180 ? item.summary.substring(0, 180) + '...' : item.summary)}">
+                        View More
+                    </button>
+                    <button class="submit-btn delete-btn" data-id="${item.id}" style="background:#c0392b; margin-top:1rem;">
+                        Delete
+                    </button>
+                </div>
+            `;
+        });
+
+        historyList.innerHTML = html;
+
+        document.querySelectorAll('.delete-btn').forEach(button => {
+            button.addEventListener('click', async function() {
+                const id = this.getAttribute('data-id');
+                await deleteStudySet(id);
+            });
+        });
+
+        document.querySelectorAll('.toggle-summary-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const id = this.getAttribute('data-id');
+                const fullText = decodeURIComponent(this.getAttribute('data-full'));
+                const shortText = decodeURIComponent(this.getAttribute('data-short'));
+                const summaryElement = document.getElementById(`summary-${id}`);
+
+                if (this.innerText === 'View More') {
+                    summaryElement.innerText = fullText;
+                    this.innerText = 'View Less';
+                } else {
+                    summaryElement.innerText = shortText;
+                    this.innerText = 'View More';
+                }
+            });
+});
+
+    } catch (error) {
+        historyList.innerHTML = `<p style="color:red;">${error.message}</p>`;
+    } finally {
+        loading.style.display = 'none';
+    }
+}
+
+async function deleteStudySet(id) {
+    try {
+        const response = await fetch('/delete-study-set', {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ id: id })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || data.message || 'Failed to delete study set');
+        }
+
+        location.reload();
+    } catch (error) {
+        alert(error.message);
+    }
+}
