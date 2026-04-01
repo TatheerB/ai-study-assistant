@@ -118,6 +118,8 @@ def generate_quiz(topic):
     prompt = f"""
     Create a 20-question multiple-choice quiz about "{topic}".
     Each question should test understanding of key concepts.
+    Every question must have EXACTLY 4 options, no more, no less. 
+    Return ONLY a valid JSON array, no extra text or formatting
 
     For each question, provide:
     - question: The question text
@@ -145,43 +147,67 @@ Only return the JSON array, no other text.
         ]
     }
     
-    response = requests.post(url, json=data)
+    # Send the request to Gemini
+    print(f"Generating quiz for: {topic}...")
+    response = requests.post(url, json=data, timeout=30)
+ 
+    # Check if the request was successful
+    if response.status_code != 200:
+        print(f"Error: Gemini API returned status {response.status_code}")
+        print(f"Details: {response.text}")
+        return None
+ 
     result = response.json()
-    
-    try:
-        text = result['candidates'][0]['content']['parts'][0]['text']
+ 
+    # Extract the text from the response
+    text = result['candidates'][0]['content']['parts'][0]['text']
+ 
+    # Remove markdown code fences if Gemini added them
+    text = text.strip()
+    if text.startswith('```json'):
+        text = text[7:]
+    if text.startswith('```'):
+        text = text[3:]
+    if text.endswith('```'):
+        text = text[:-3]
+    text = text.strip()
+ 
+    # Parse the JSON
+    quiz_data = json.loads(text)
 
-        # Clean up the text
-        text = text.strip()
-        if text.startswith('```json'):
-            text = text[7:]
-        if text.startswith('```'):
-            text = text[3:]
-        if text.endswith('```'):
-            text = text[:-3]
-        text = text.strip()
-        quiz_data = json.loads(text)
+    # Remove duplicate questions
+    seen_questions = []
+    unique_quiz = []
+    for question in quiz_data:
+        question_lower = question['question'].lower()
         
-        if len(quiz_data) < 20:
-            while len(quiz_data) < 20:
-                quiz_data.append({
-                    "question": f"Additional question about {topic}?",
-                    "options": ["Option 1", "Option 2", "Option 3", "Option 4"],
-                    "correct": 0
-                })
-        return quiz_data[:20]
+        if question_lower not in seen_questions:
+            seen_questions.append(question_lower)
+            unique_quiz.append(question)
+            
+    quiz_data = unique_quiz
     
-    except Exception as e:
-        print(f"Error parsing quiz: {e}")
-        fallback = []
-        for i in range(20):
-            fallback.append({
-                "question": f"Question {i+1}: What is {topic}?",
-                "options": ["Definition 1", "Definition 2", "Definition 3", "Definition 4"],
-                "correct": 0
-            })
-        return fallback
-    
+    # Remove any questions that don't have exactly 4 options
+    valid_quiz = []
+    for question in quiz_data:
+        if isinstance(question.get('options'), list) and len(question['options']) == 4:
+            valid_quiz.append(question)
+
+    print("VALID QUIZ COUNT:", len(quiz_data))
+    for i, q in enumerate(quiz_data):
+        print(f"Q{i+1} options: {q.get('options')}")
+
+    quiz_data = valid_quiz
+
+    # Pad to 20 if we ended up with fewer questions
+    for i in range(len(quiz_data), 20):
+        quiz_data.append({
+            "question": f"Additional question {i + 1} about {topic}?",
+            "options": ["Option 1", "Option 2", "Option 3", "Option 4"],
+            "correct": 0
+        })
+
+    return quiz_data[:20]
 
 def generate_summary(topic):
     """Generate a concise study summary for the given topic"""
