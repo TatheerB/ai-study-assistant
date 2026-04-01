@@ -111,6 +111,8 @@ def generate_quiz(topic):
     prompt = f"""
     Create a 20-question multiple-choice quiz about "{topic}".
     Each question should test understanding of key concepts.
+    Every question must have EXACTLY 4 options, no more, no less. 
+    Return ONLY a valid JSON array, no extra text or formatting
 
     For each question, provide:
     - question: The question text

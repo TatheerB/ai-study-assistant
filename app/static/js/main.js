@@ -198,8 +198,7 @@ function displayQuiz() {
         const q = quizQuestions[i];
         html += `<div class="question-card">`;
         html += `<p class="question-text"><strong>${i + 1}. ${q.question}</strong></p>`;
-        
-        //Important for showing the options.
+ 
         const options = Array.isArray(q.options) ? q.options : [];
         for (let j = 0; j < options.length; j++) {
             const optionText = options[j]
@@ -215,7 +214,6 @@ function displayQuiz() {
                 </div>
             `;
         }
-
         html += `</div>`;
     }
  
