@@ -63,7 +63,7 @@ Only return the JSON array, no other text.
         # Extract the text from Gemini's response
         text = result['candidates'][0]['content']['parts'][0]['text']
         
-        # Clean up the text - remove markdown code blocks if present
+        # Clean up the text
         text = text.strip()
         if text.startswith('```json'):
             text = text[7:]
@@ -199,7 +199,6 @@ Only return the JSON array, no other text.
         })
 
     return quiz_data[:20]
-
 
 def generate_summary(topic):
     """Generate a concise study summary for the given topic"""
