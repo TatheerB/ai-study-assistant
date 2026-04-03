@@ -39,8 +39,8 @@ jobs:
       with:
         push: true
         tags: |
-          tatheerbatool/ai-study-assistant_project:latest
-          tatheerbatool/ai-study-assistant_project:${{ github.sha }}
+          tatheerbatool/ai-study-assistant:latest
+          tatheerbatool/ai-study-assistant:${{ github.sha }}
     
     - name: Smoke test
       run: |
