@@ -35,6 +35,9 @@ jobs:
           -e MONGODB_URI="mongodb://test" \
           --name test-container tatheerbatool/ai-study-assistant:latest
         sleep 5
+        echo "=== CONTAINER LOGS ==="
+        docker logs test-container
+        echo "======================"
         curl -f http://localhost:5000/health
         docker stop test-container
         docker rm test-container
