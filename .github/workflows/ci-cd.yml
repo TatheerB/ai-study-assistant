@@ -32,10 +32,13 @@ jobs:
     - name: Smoke test
       run: |
         docker run -d -p 5000:5000 \
-          -e GEMINI_API_KEY="test-key" \
-          -e MONGODB_URI="mongodb://test" \
+          -e GEMINI_API_KEY="dummy-key" \
+          -e MONGODB_URI="mongodb://dummy" \
           --name test-container ai-study-assistant:latest
         sleep 5
+        echo "=== CONTAINER LOGS ==="
+        docker logs test-container
+        echo "======================"
         curl -f http://localhost:5000/health
         docker stop test-container
         docker rm test-container
