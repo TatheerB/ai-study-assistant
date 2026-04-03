@@ -1,0 +1,76 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ develop, main ]
+  pull_request:
+    branches: [ develop, main ]
+
+jobs:
+  build-test-push:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+    
+    - name: Build image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: false
+        tags: |
+          ai-study-assistant:latest
+          tatheerbatool/ai-study-assistant:latest
+          tatheerbatool/ai-study-assistant:${{ github.sha }}
+    
+    - name: Smoke test
+      run: |
+        docker run -d -p 5000:5000 \
+          -e GEMINI_API_KEY="dummy-key" \
+          -e MONGODB_URI="mongodb://dummy" \
+          --name test-container ai-study-assistant:latest
+        sleep 5
+        echo "=== CONTAINER LOGS ==="
+        docker logs test-container
+        echo "======================"
+        curl -f http://localhost:5000/health
+        docker stop test-container
+        docker rm test-container
+    
+    - name: Push to Docker Hub
+      if: github.event_name == 'push'
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: true
+        tags: |
+          tatheerbatool/ai-study-assistant:latest
+          tatheerbatool/ai-study-assistant:${{ github.sha }}
+
+    - name: Run container and test
+      run: |
+        docker run -d --name test-container -p 5000:5000 ai-study-assistant
+        sleep 5
+        echo "=== Container Logs ==="
+        docker logs test-container
+        echo "====================="
+        docker ps -a
+        curl -v http://localhost:5000/health || echo "Health check failed"
+        docker stop test-container || true
+        docker rm test-container || true
+
+  deploy:
+    needs: build-test-push
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Trigger Render Deploy
+      run: |
+        curl -X POST "${{ secrets.RENDER_DEPLOY_URL }}"
