@@ -30,9 +30,12 @@ jobs:
     
     - name: Smoke test
       run: |
-        docker run -d -p 5000:5000 --name test-container tatheerbatool/ai-study-assistant:${{ github.sha }}
+        docker run -d -p 5000:5000 \
+          -e GEMINI_API_KEY="test-key" \
+          -e MONGODB_URI="mongodb://test" \
+          --name test-container tatheerbatool/ai-study-assistant:latest
         sleep 5
-        curl http://localhost:5000/health | grep "healthy"
+        curl -f http://localhost:5000/health
         docker stop test-container
         docker rm test-container
     
