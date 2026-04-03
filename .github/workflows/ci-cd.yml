@@ -53,6 +53,18 @@ jobs:
           tatheerbatool/ai-study-assistant:latest
           tatheerbatool/ai-study-assistant:${{ github.sha }}
 
+    - name: Run container and test
+      run: |
+        docker run -d --name test-container -p 5000:5000 ai-study-assistant
+        sleep 5
+        echo "=== Container Logs ==="
+        docker logs test-container
+        echo "====================="
+        docker ps -a
+        curl -v http://localhost:5000/health || echo "Health check failed"
+        docker stop test-container || true
+        docker rm test-container || true
+
   deploy:
     needs: build-test-push
     if: github.event_name == 'push'

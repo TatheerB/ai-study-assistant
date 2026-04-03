@@ -5,6 +5,11 @@ from pymongo import MongoClient
 
 load_dotenv()
 
+# Don't crash if MongoDB URI is missing
+mongodb_uri = os.getenv('MONGODB_URI')
+if not mongodb_uri:
+    print("WARNING: MONGODB_URI not set. Database features will be disabled.")
+
 def create_app():
     app = Flask(__name__)
     
