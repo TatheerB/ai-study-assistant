@@ -3,6 +3,7 @@
 **Course:** INFS3203 -- Winter 2026\
 **Team Members:** Tatheer Batool & Akmal Saleem\
 **GitHub Repository:** https://github.com/TatheerB/ai-study-assistant
+**Live URL:** https://ai-study-assistant-group2.onrender.com
 
 ------------------------------------------------------------------------
 
